@@ -86,6 +86,24 @@ export interface ITargetsConfiguration {
   smartQuotes: ISmartQuotesConfiguration;
 }
 
+export interface IWhichKeyConfiguration {
+  /**
+   * Enable which-key popup to show available key bindings
+   */
+  enable: boolean;
+
+  /**
+   * Delay in milliseconds before the which-key popup appears
+   */
+  delay: number;
+
+  /**
+   * Custom group labels for key prefixes
+   * Example: { "<leader>f": "Files", "<leader>g": "Git" }
+   */
+  groups: { [prefix: string]: string };
+}
+
 export interface IConfiguration {
   [key: string]: any;
 
@@ -164,6 +182,11 @@ export interface IConfiguration {
    * Case sensitivity is determined by 'ignorecase' and 'smartcase'
    */
   sneakUseIgnorecaseAndSmartcase: boolean;
+
+  /**
+   * Which-key popup configuration for showing available key bindings
+   */
+  whichkey: IWhichKeyConfiguration;
 
   /**
    * Use single-character `sneak` instead of Vim's native `f`"

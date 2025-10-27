@@ -6,6 +6,7 @@ import {
   IKeyRemapping,
   IModeSpecificStrings,
   ITargetsConfiguration,
+  IWhichKeyConfiguration,
 } from '../src/configuration/iconfiguration';
 
 export class Configuration implements IConfiguration {
@@ -58,6 +59,11 @@ export class Configuration implements IConfiguration {
       breakThroughLines: true,
       aIncludesSurroundingSpaces: true,
     },
+  };
+  whichkey: IWhichKeyConfiguration = {
+    enable: false,
+    delay: 500,
+    groups: {},
   };
   autoSwitchInputMethod = {
     enable: false,
