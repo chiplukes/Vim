@@ -715,6 +715,25 @@
           "markdownDescription": "Whether to use default Vim behavior when using `a` (e.g. `da'`) which include surrounding spaces, or not, as for other text objects.",
           "default": true
         },
+        "vim.whichkey.enable": {
+          "type": "boolean",
+          "markdownDescription": "Enable the which-key popup to show available key bindings after a partial key sequence (inspired by [which-key.nvim](https://github.com/folke/which-key.nvim)).",
+          "default": false
+        },
+        "vim.whichkey.delay": {
+          "type": "number",
+          "description": "Delay in milliseconds before the which-key popup appears.",
+          "default": 500,
+          "minimum": 0
+        },
+        "vim.whichkey.groups": {
+          "type": "object",
+          "description": "Custom group labels for key prefixes. Example: {\"<leader>f\": \"Files\", \"<leader>g\": \"Git\"}",
+          "default": {},
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "vim.sneak": {
           "type": "boolean",
           "markdownDescription": "Enable the [Sneak](https://github.com/justinmk/vim-sneak) plugin for Vim.",

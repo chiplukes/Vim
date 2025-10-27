@@ -60,6 +60,7 @@ import {
   isVisualMode,
 } from './mode';
 import { DocumentContentChangeAction } from '../actions/commands/documentChange';
+import { WhichKeyService } from '../whichKey/whichKeyService';
 
 interface IModeHandlerMap {
   get(editorId: Uri): ModeHandler | undefined;
@@ -84,6 +85,7 @@ export class ModeHandler implements vscode.Disposable, IModeHandler {
   private readonly disposables: vscode.Disposable[] = [];
   private readonly handlerMap: IModeHandlerMap;
   private readonly remappers: Remappers;
+  private readonly whichKeyService: WhichKeyService;
 
   public internalSelectionsTracker = new InternalSelectionsTracker();
 
@@ -120,7 +122,14 @@ export class ModeHandler implements vscode.Disposable, IModeHandler {
 
     this.vimState = new VimState(textEditor, new EasyMotion());
     this.remapState = new RemapState();
+
+    // Initialize which-key service with callback to send keys
+    this.whichKeyService = new WhichKeyService((keys: string[]) => {
+      return this.handleMultipleKeyEvents(keys);
+    });
+
     this.disposables.push(this.vimState);
+    this.disposables.push(this.whichKeyService);
   }
 
   /**
@@ -519,6 +528,16 @@ export class ModeHandler implements vscode.Disposable, IModeHandler {
 
       this.vimState.recordedState.allowPotentialRemapOnFirstKey = true;
 
+      // If the remapper is waiting for more keys (potential remap), show which-key
+      if (this.remappers.isPotentialRemap) {
+        try {
+          // Use commandList instead of actionKeys since the remapper is handling the keys
+          void this.whichKeyService.show(this.vimState, this.vimState.recordedState.commandList);
+        } catch (error) {
+          console.error('[ModeHandler] Error showing which-key for potential remap:', error);
+        }
+      }
+
       if (!handledAsRemap) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
         if (key === SpecialKeys.TimeoutFinished) {
@@ -630,6 +649,31 @@ export class ModeHandler implements vscode.Disposable, IModeHandler {
     const action = getRelevantAction(recordedState.actionKeys, this.vimState);
     switch (action) {
       case KeypressState.NoPossibleMatch:
+        // Check if there are remappings that could match even though getRelevantAction didn't find a built-in action
+        // This handles cases like <leader>w where we have <leader>wv, <leader>wc, etc.
+        const hasRemappingMatches = this.whichKeyService.hasMatches(
+          this.vimState,
+          recordedState.actionKeys,
+        );
+
+        if (hasRemappingMatches) {
+          // There are remappings that could match, so show which-key and keep waiting
+          this.vimState.recordedState.waitingForAnotherActionKey = true;
+          try {
+            void this.whichKeyService.show(this.vimState, recordedState.actionKeys);
+          } catch (error) {
+            console.error('[ModeHandler] Error showing which-key:', error);
+          }
+          return false;
+        }
+
+        // Hide which-key popup since there's truly no match (no built-in actions or remappings)
+        try {
+          this.whichKeyService.hide();
+        } catch (error) {
+          console.error('[ModeHandler] Error hiding which-key:', error);
+        }
+
         if (this.vimState.currentMode === Mode.Insert) {
           this.vimState.recordedState.actionKeys = [];
         } else {
@@ -643,7 +687,21 @@ export class ModeHandler implements vscode.Disposable, IModeHandler {
       case KeypressState.WaitingOnKeys:
         this.vimState.recordedState.waitingForAnotherActionKey = true;
 
+        // Show which-key popup with available options
+        try {
+          void this.whichKeyService.show(this.vimState, recordedState.actionKeys);
+        } catch (error) {
+          console.error('[ModeHandler] Error showing which-key:', error);
+        }
+
         return false;
+    }
+
+    // Hide which-key since we found a complete action
+    try {
+      this.whichKeyService.hide();
+    } catch (error) {
+      console.error('[ModeHandler] Error hiding which-key:', error);
     }
 
     if (

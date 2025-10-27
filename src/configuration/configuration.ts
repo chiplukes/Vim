@@ -16,6 +16,7 @@ import {
   IKeyRemapping,
   IModeSpecificStrings,
   ITargetsConfiguration,
+  IWhichKeyConfiguration,
 } from './iconfiguration';
 
 import { SUPPORT_VIMRC } from 'platform/constants';
@@ -290,6 +291,12 @@ class Configuration implements IConfiguration {
       breakThroughLines: false,
       aIncludesSurroundingSpaces: true,
     },
+  };
+
+  whichkey: IWhichKeyConfiguration = {
+    enable: false,
+    delay: 200,
+    groups: {},
   };
 
   autoSwitchInputMethod: IAutoSwitchInputMethod = {
