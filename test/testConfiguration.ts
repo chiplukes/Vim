@@ -10,6 +10,10 @@ import {
 } from '../src/configuration/iconfiguration';
 
 export class Configuration implements IConfiguration {
+  constructor(overrides: Partial<IConfiguration> = {}) {
+    Object.assign(this, overrides);
+  }
+
   [key: string]: any;
 
   useSystemClipboard = false;
@@ -68,7 +72,7 @@ export class Configuration implements IConfiguration {
     obtainIMCmd: '',
   };
   timeout = 1000;
-  maxmapdepth = 1000;
+  maxmapdepth = 100;
   showcmd = true;
   showmodename = true;
   leader = '//';
@@ -76,6 +80,7 @@ export class Configuration implements IConfiguration {
   incsearch = true;
   inccommand = '' as const;
   startInInsertMode = false;
+  startInInsertModeSchemes = ['comment'];
   statusBarColorControl = false;
   statusBarColors: IModeSpecificStrings<string | string[]> = {
     normal: ['#8FBCBB', '#434C5E'],
