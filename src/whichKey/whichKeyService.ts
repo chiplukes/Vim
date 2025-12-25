@@ -202,33 +202,75 @@ export class WhichKeyService implements vscode.Disposable {
   private buildItems(vimState: VimState, currentKeys: string[]): WhichKeyItem[] {
     try {
       const items: WhichKeyItem[] = [];
-      const seenKeys = new Set<string>();
+      const seenNextKeys = new Set<string>();
+      const groupsConfig = configuration.whichkey?.groups || {};
 
       // Get user-defined remappings for current mode
       const remappings = this.getRemappingsForMode(vimState.currentMode);
       const currentKeyString = currentKeys.join('');
 
+      // Build a map of next-key to group name for quick lookup
+      // Groups are defined as full prefixes like "<leader>c" which becomes " c"
+      const nextKeyGroups = new Map<string, string>();
+      for (const [prefix, groupName] of Object.entries(groupsConfig)) {
+        // Normalize the prefix (replace <leader> with actual leader key)
+        const leader = configuration.leader;
+        const normalizedPrefix = prefix.replace(/<leader>/gi, leader);
+
+        // If this prefix starts with current keys, extract the next key
+        // IMPORTANT: Only match if the remaining part is exactly 1 character
+        // This prevents <leader>cd (Debug) from overwriting <leader>c (Code)
+        if (
+          normalizedPrefix.startsWith(currentKeyString) &&
+          normalizedPrefix.length > currentKeyString.length
+        ) {
+          const remaining = normalizedPrefix.slice(currentKeyString.length);
+          // Only use this group if the remaining part is exactly 1 character
+          if (remaining.length === 1 && typeof groupName === 'string') {
+            nextKeyGroups.set(remaining, groupName);
+          }
+        }
+      }
+
       for (const [keySeq, remap] of remappings) {
         // Check if this remapping starts with the current key sequence
         if (keySeq.startsWith(currentKeyString) && keySeq.length > currentKeyString.length) {
-          const fullKeyString = remap.before.join('');
-
-          // Prevent duplicates
-          if (seenKeys.has(fullKeyString)) {
-            continue;
-          }
-          seenKeys.add(fullKeyString);
-
           const remainingKeys = remap.before.slice(currentKeys.length);
-          const group = this.getRemappingGroup(remap.before);
+          const nextKey = remainingKeys[0];
 
-          const item: WhichKeyItem = {
-            label: remainingKeys.join(''),
-            description: this.getRemappingDescription(remap),
-            detail: group ? `[${group}]` : undefined,
-            remainingKeys,
-          };
-          items.push(item);
+          // Check if this next key belongs to a group
+          const groupName = nextKeyGroups.get(nextKey);
+
+          if (groupName) {
+            // This key is part of a group - only show the group once
+            if (seenNextKeys.has(nextKey)) {
+              continue; // Already added this group
+            }
+            seenNextKeys.add(nextKey);
+
+            const item: WhichKeyItem = {
+              label: nextKey,
+              description: `[${groupName}]`,
+              remainingKeys: [nextKey],
+            };
+            items.push(item);
+          } else {
+            // Not a group - show individual mapping
+            const displayKey = remainingKeys.join('');
+
+            // Prevent duplicates
+            if (seenNextKeys.has(displayKey)) {
+              continue;
+            }
+            seenNextKeys.add(displayKey);
+
+            const item: WhichKeyItem = {
+              label: displayKey,
+              description: this.getRemappingDescription(remap),
+              remainingKeys,
+            };
+            items.push(item);
+          }
         }
       }
 
@@ -263,13 +305,20 @@ export class WhichKeyService implements vscode.Disposable {
   }
 
   /**
-   * Gets a human-readable description for a remapping
+   * Gets a human-readable description for a remapping.
+   * Uses the user-defined description field if available, otherwise formats the command ID.
    */
   private getRemappingDescription(remap: IKeyRemapping): string {
-    // If remapping has commands, show the first command
+    // Use user-defined description if provided
+    if (remap.description) {
+      return remap.description;
+    }
+
+    // If remapping has commands, format the command ID
     if (remap.commands && remap.commands.length > 0) {
       const cmd = remap.commands[0];
-      return typeof cmd === 'string' ? cmd : cmd.command;
+      const commandId = typeof cmd === 'string' ? cmd : cmd.command;
+      return this.formatCommandId(commandId);
     }
 
     // If remapping maps to other keys, show them
@@ -278,6 +327,22 @@ export class WhichKeyService implements vscode.Disposable {
     }
 
     return 'Custom mapping';
+  }
+
+  /**
+   * Formats a command ID into a more readable form
+   * e.g., "workbench.action.splitEditorRight" -> "Split Editor Right"
+   */
+  private formatCommandId(commandId: string): string {
+    // Extract the last part after the last dot
+    const parts = commandId.split('.');
+    const lastPart = parts[parts.length - 1];
+
+    // Convert camelCase to Title Case with spaces
+    return lastPart
+      .replace(/([A-Z])/g, ' $1') // Add space before capitals
+      .replace(/^./, (s) => s.toUpperCase()) // Capitalize first letter
+      .trim();
   }
 
   /**
