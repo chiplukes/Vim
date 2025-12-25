@@ -14,8 +14,10 @@
       "problemMatcher": "$tsc-watch"
     },
     {
-      "type": "gulp",
-      "task": "build-dev",
+      "type": "shell",
+      "label": "build-dev",
+      "command": "yarn",
+      "args": ["build-dev"],
       "problemMatcher": []
     },
     {

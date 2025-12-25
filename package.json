@@ -734,6 +734,11 @@
             "type": "string"
           }
         },
+        "vim.whichkey.repeatWithLeaderLeader": {
+          "type": "boolean",
+          "markdownDescription": "Enable `<leader><leader>` to repeat the last command marked with `repeatable: true` in keybindings.",
+          "default": true
+        },
         "vim.sneak": {
           "type": "boolean",
           "markdownDescription": "Enable the [Sneak](https://github.com/justinmk/vim-sneak) plugin for Vim.",

@@ -121,6 +121,24 @@ export class Remapper implements IRemapper {
       return true;
     }
 
+    // Check for <leader><leader> to repeat last repeatable command
+    if (
+      configuration.whichkey.repeatWithLeaderLeader &&
+      keys.length === 2 &&
+      keys[0] === configuration.leader &&
+      keys[1] === configuration.leader
+    ) {
+      const lastCommand = modeHandler.getLastRepeatableCommand();
+      if (lastCommand) {
+        Logger.debug(`Repeating last command via <leader><leader>: ${lastCommand.before}`);
+        modeHandler.hideWhichKey();
+        vimState.recordedState.resetCommandList();
+        await this.handleRemapping(lastCommand, modeHandler, false);
+        return true;
+      }
+      // No last command to repeat, fall through to normal handling
+    }
+
     Logger.trace(
       `trying to find matching remap. keys=${keys}. mode=${
         Mode[vimState.currentMode]
@@ -362,7 +380,15 @@ export class Remapper implements IRemapper {
 
         remapState.remapUsedACharacter = false;
 
+        // Hide which-key popup before executing the remapping
+        modeHandler.hideWhichKey();
+
         await this.handleRemapping(remapping, modeHandler, skipFirstCharacter);
+
+        // Record this command if it's marked as repeatable (for <leader><leader> functionality)
+        if (remapping.repeatable) {
+          modeHandler.recordRepeatableCommand(remapping);
+        }
       } catch (e) {
         if (e instanceof ForceStopRemappingError) {
           // If a motion fails or a VimError happens during any kind of remapping or if the user presses the
