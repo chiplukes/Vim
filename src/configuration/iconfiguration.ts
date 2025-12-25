@@ -19,6 +19,11 @@ export interface IKeyRemapping {
   recursive?: boolean;
   commands?: Array<{ command: string; args: any[] } | string>;
   source?: 'vscode' | 'vimrc';
+  /**
+   * If true, this command can be repeated by pressing <leader><leader>.
+   * Useful for frequently re-executed commands like window splits or toggles.
+   */
+  repeatable?: boolean;
 }
 
 export interface IVimrcKeyRemapping {
@@ -102,6 +107,11 @@ export interface IWhichKeyConfiguration {
    * Example: { "<leader>f": "Files", "<leader>g": "Git" }
    */
   groups: { [prefix: string]: string };
+
+  /**
+   * Enable <leader><leader> to repeat the last command marked with repeatable: true
+   */
+  repeatWithLeaderLeader: boolean;
 }
 
 export interface IConfiguration {

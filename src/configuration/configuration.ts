@@ -297,6 +297,7 @@ class Configuration implements IConfiguration {
     enable: false,
     delay: 200,
     groups: {},
+    repeatWithLeaderLeader: true,
   };
 
   autoSwitchInputMethod: IAutoSwitchInputMethod = {

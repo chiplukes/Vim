@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { VimState } from '../state/vimState';
-import { Mode } from '../mode/mode';
-import { IKeyRemapping } from '../configuration/iconfiguration';
 import { configuration } from '../configuration/configuration';
+import { IKeyRemapping } from '../configuration/iconfiguration';
+import { Mode } from '../mode/mode';
+import { VimState } from '../state/vimState';
 
 /**
  * Represents an item that can be selected from the which-key popup
@@ -30,6 +30,11 @@ export class WhichKeyService implements vscode.Disposable {
   private isVisible = false;
   private outputChannel: vscode.OutputChannel;
 
+  /**
+   * Stores the last executed repeatable command for <leader><leader> functionality
+   */
+  private lastRepeatableCommand: IKeyRemapping | undefined;
+
   constructor(keySender: KeySender) {
     try {
       this.keySender = keySender;
@@ -39,6 +44,24 @@ export class WhichKeyService implements vscode.Disposable {
       console.error('[WhichKey] Failed to initialize:', error);
       throw error;
     }
+  }
+
+  /**
+   * Records a command as the last repeatable command.
+   * Called by the remapper when a command with `repeatable: true` is executed.
+   */
+  public recordRepeatableCommand(remapping: IKeyRemapping): void {
+    if (remapping.repeatable) {
+      this.lastRepeatableCommand = remapping;
+    }
+  }
+
+  /**
+   * Returns the last repeatable command, if any.
+   * Used to implement <leader><leader> repeat functionality.
+   */
+  public getLastRepeatableCommand(): IKeyRemapping | undefined {
+    return this.lastRepeatableCommand;
   }
 
   /**

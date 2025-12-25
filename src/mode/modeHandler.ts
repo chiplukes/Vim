@@ -15,6 +15,7 @@ import { IBaseAction } from '../actions/types';
 import { Cursor } from '../common/motion/cursor';
 import { configuration } from '../configuration/configuration';
 import { decoration } from '../configuration/decoration';
+import { IKeyRemapping } from '../configuration/iconfiguration';
 import { isLiteralMode, remapKey } from '../configuration/langmap';
 import { Notation } from '../configuration/notation';
 import { Remappers } from '../configuration/remapper';
@@ -133,6 +134,30 @@ export class ModeHandler implements vscode.Disposable, IModeHandler {
 
     this.disposables.push(this.vimState);
     this.disposables.push(this.whichKeyService);
+  }
+
+  /**
+   * Records a repeatable command for <leader><leader> functionality.
+   * Called by the remapper when a command with `repeatable: true` is executed.
+   */
+  public recordRepeatableCommand(remapping: IKeyRemapping): void {
+    this.whichKeyService.recordRepeatableCommand(remapping);
+  }
+
+  /**
+   * Gets the last repeatable command, if any.
+   * Used to implement <leader><leader> repeat functionality.
+   */
+  public getLastRepeatableCommand(): IKeyRemapping | undefined {
+    return this.whichKeyService.getLastRepeatableCommand();
+  }
+
+  /**
+   * Hides the which-key popup display.
+   * Called by the remapper when a remapping is executed.
+   */
+  public hideWhichKey(): void {
+    this.whichKeyService.hide();
   }
 
   /**
