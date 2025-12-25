@@ -24,6 +24,11 @@ export interface IKeyRemapping {
    * Useful for frequently re-executed commands like window splits or toggles.
    */
   repeatable?: boolean;
+  /**
+   * Human-readable description for this keybinding.
+   * Displayed in the which-key popup. If not provided, the command ID will be formatted.
+   */
+  description?: string;
 }
 
 export interface IVimrcKeyRemapping {

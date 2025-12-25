@@ -54,11 +54,12 @@ A fully functional which-key feature, inspired by [which-key.nvim](https://githu
 - `show(vimState, currentKeys)` - Sets timeout to show popup after configured delay
 - `hide()` - Hides output channel, clears timeout
 - `displayPopup(vimState, currentKeys)` - Builds and displays formatted table in Output Channel
-- `buildItems(vimState, currentKeys)` - Builds list of matching remappings
+- `buildItems(vimState, currentKeys)` - Builds list of matching remappings, collapses groups properly
 - `getRemappingsForMode(mode)` - Gets user remappings for current mode
 - `hasMatches(vimState, currentKeys)` - Checks if any remappings match (used by ModeHandler)
 - `recordRepeatableCommand(remapping)` - Stores command for `<leader><leader>` repeat
 - `getLastRepeatableCommand()` - Returns last stored repeatable command
+- `getRemappingDescription(remap)` - Returns user-defined `description` or formatted command ID
 
 **Design Decisions:**
 
@@ -81,6 +82,7 @@ A fully functional which-key feature, inspired by [which-key.nvim](https://githu
   - `groups: { [prefix: string]: string }`
   - `repeatWithLeaderLeader: boolean`
 - Added `repeatable?: boolean` to `IKeyRemapping` interface
+- Added `description?: string` to `IKeyRemapping` interface (user-defined friendly name for which-key display)
 - Added `whichkey: IWhichKeyConfiguration` to `IConfiguration` interface
 
 ### 3. `src/configuration/configuration.ts`
@@ -260,22 +262,27 @@ To use the feature, add to your `settings.json`:
   },
 
   // Example remappings that will show in which-key:
+  // Use "description" for friendly names in the which-key popup
   "vim.normalModeKeyBindings": [
     {
       "before": ["<leader>", "f", "f"],
-      "commands": ["workbench.action.quickOpen"]
+      "commands": ["workbench.action.quickOpen"],
+      "description": "Find Files"
     },
     {
       "before": ["<leader>", "f", "r"],
-      "commands": ["workbench.action.openRecent"]
+      "commands": ["workbench.action.openRecent"],
+      "description": "Recent Files"
     },
     {
       "before": ["<leader>", "w", "v"],
-      "commands": ["workbench.action.splitEditorRight"]
+      "commands": ["workbench.action.splitEditorRight"],
+      "description": "Vertical Split"
     },
     {
       "before": ["<leader>", "w", "c"],
-      "commands": ["workbench.action.closeGroup"]
+      "commands": ["workbench.action.closeGroup"],
+      "description": "Close Window"
     }
   ]
 }
@@ -298,10 +305,13 @@ If you press `<leader>w`, it updates to show:
 ╔══════════════════════════════════════════════╗
 ║  Which-key: After " w"                       ║
 ╠══════════════════════════════════════════════╣
-║  v    → workbench.action.splitEditorRight    ║
-║  c    → workbench.action.closeGroup          ║
+║  v    → Vertical Split                       ║
+║  c    → Close Window                         ║
 ╚══════════════════════════════════════════════╝
 ```
+
+> **Note:** Descriptions come from the `description` field in your keybinding.
+> If not provided, falls back to a formatted version of the command ID.
 
 ---
 
@@ -424,7 +434,7 @@ See `WHICH_KEY_TODO.md` for detailed enhancement plans.
 
 **Medium Priority:**
 
-- Custom descriptions per mapping
+- ~~Custom descriptions per mapping~~ ✅ **IMPLEMENTED** (use `description` field)
 - Show partial key sequence more prominently
 
 **Low Priority:**
@@ -497,6 +507,27 @@ See `WHICH_KEY_TODO.md` for detailed enhancement plans.
 - **Root Cause:** Remapper had `handledAsRemap=true`, so which-key condition was `&& !handledAsRemap`
 - **Solution:** Remove `!handledAsRemap` check, always show if `isPotentialRemap`
 
+### Problem 5: Groups Not Collapsing Properly
+
+- **Issue:** Pressing `<leader>` showed all keymaps instead of collapsed groups like `[Code]`
+- **Root Cause:** Group matching was too loose - any prefix match would trigger
+- **Solution:** Only match groups where remaining prefix after current keys is exactly 1 character
+- **Example:** For `<leader>c` group, after typing `<leader>`, remaining is `c` (1 char) → show as `[Code]`
+
+### Problem 6: Wrong Group Labels (Sub-groups Overwriting Parents)
+
+- **Issue:** `c` showed `[Debug]` instead of `[Code]`
+- **Root Cause:** Sub-groups like `<leader>cd` (Debug) were matching and overwriting `<leader>c` (Code)
+- **Solution:** Changed logic to only accept groups where `remaining.length === 1` to get exact match
+
+### Problem 7: Raw Command IDs Instead of Friendly Names
+
+- **Issue:** Which-key showed `editor.action.quickFix` instead of "Quick Fix"
+- **Initial (Wrong) Solution:** Hardcoded `COMMAND_DESCRIPTIONS` lookup table in extension
+- **User Feedback:** "Descriptions should be part of user's configuration, not baked into the extension"
+- **Correct Solution:** Added `description?: string` field to `IKeyRemapping` interface
+- **Benefit:** Users control their own descriptions, more flexible and maintainable
+
 These insights are crucial for anyone maintaining or extending this code!
 
 ---
@@ -550,6 +581,31 @@ To make a keybinding repeatable with `<leader><leader>`, add `"repeatable": true
   }
 ]
 ```
+
+### Custom Descriptions
+
+To display a friendly name in the which-key popup instead of the command ID, add a `"description"` field:
+
+```json
+"vim.normalModeKeyBindingsNonRecursive": [
+  {
+    "before": ["<leader>", "c", "r"],
+    "commands": ["editor.action.rename"],
+    "description": "Rename Symbol"
+  },
+  {
+    "before": ["<leader>", "c", "a"],
+    "commands": ["editor.action.quickFix"],
+    "description": "Code Action"
+  }
+]
+```
+
+**Display Priority:**
+
+1. User-defined `description` field (if provided)
+2. Formatted command ID (e.g., `editor.action.quickFix` → `Quick Fix`)
+3. Arrow notation for key sequences (e.g., `→ gg`)
 
 ---
 
