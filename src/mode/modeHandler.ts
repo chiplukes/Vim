@@ -157,8 +157,8 @@ export class ModeHandler implements vscode.Disposable, IModeHandler {
    * Hides the which-key popup display.
    * Called by the remapper when a remapping is executed.
    */
-  public hideWhichKey(): void {
-    this.whichKeyService.hide();
+  public async hideWhichKey(): Promise<void> {
+    await this.whichKeyService.hide();
   }
 
   /**
@@ -697,7 +697,7 @@ export class ModeHandler implements vscode.Disposable, IModeHandler {
 
         // Hide which-key popup since there's truly no match (no built-in actions or remappings)
         try {
-          this.whichKeyService.hide();
+          void this.whichKeyService.hide();
         } catch (error) {
           console.error('[ModeHandler] Error hiding which-key:', error);
         }
@@ -727,7 +727,7 @@ export class ModeHandler implements vscode.Disposable, IModeHandler {
 
     // Hide which-key since we found a complete action
     try {
-      this.whichKeyService.hide();
+      void this.whichKeyService.hide();
     } catch (error) {
       console.error('[ModeHandler] Error hiding which-key:', error);
     }

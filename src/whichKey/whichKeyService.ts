@@ -103,7 +103,7 @@ export class WhichKeyService implements vscode.Disposable {
   /**
    * Hides the which-key display and clears any pending timeouts
    */
-  public hide(): void {
+  public async hide(): Promise<void> {
     try {
       if (this.timeoutHandle) {
         clearTimeout(this.timeoutHandle);
@@ -114,7 +114,10 @@ export class WhichKeyService implements vscode.Disposable {
         // Clear the output channel but keep it open
         this.outputChannel.clear();
         // Optionally hide it
-        this.outputChannel.hide();
+        void this.outputChannel.hide();
+
+        // Give the UI a moment to process the hide operation
+        await new Promise((resolve) => setTimeout(resolve, 10));
       }
 
       this.isVisible = false;
@@ -366,7 +369,7 @@ export class WhichKeyService implements vscode.Disposable {
    * Disposes of resources
    */
   public dispose(): void {
-    this.hide();
-    this.outputChannel.dispose();
+    void this.hide();
+    void this.outputChannel.dispose();
   }
 }

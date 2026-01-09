@@ -131,7 +131,7 @@ export class Remapper implements IRemapper {
       const lastCommand = modeHandler.getLastRepeatableCommand();
       if (lastCommand) {
         Logger.debug(`Repeating last command via <leader><leader>: ${lastCommand.before}`);
-        modeHandler.hideWhichKey();
+        await modeHandler.hideWhichKey();
         vimState.recordedState.resetCommandList();
         await this.handleRemapping(lastCommand, modeHandler, false);
         return true;
@@ -381,7 +381,7 @@ export class Remapper implements IRemapper {
         remapState.remapUsedACharacter = false;
 
         // Hide which-key popup before executing the remapping
-        modeHandler.hideWhichKey();
+        await modeHandler.hideWhichKey();
 
         await this.handleRemapping(remapping, modeHandler, skipFirstCharacter);
 
