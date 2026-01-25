@@ -1,6 +1,6 @@
 # Which-Key Feature Implementation Summary
 
-**Date:** December 24, 2025
+**Date:** January 24, 2026
 **Branch:** `feature/which-key`
 **Status:** ✅ **COMPLETE & WORKING** 🎉
 
@@ -35,6 +35,7 @@ A fully functional which-key feature, inspired by [which-key.nvim](https://githu
    - `vim.whichkey.delay` - Delay in ms before popup appears (default: 200ms)
    - `vim.whichkey.groups` - Custom labels for key prefixes
    - `vim.whichkey.repeatWithLeaderLeader` - Enable `<leader><leader>` repeat (default: true)
+   - `vim.whichkey.hideOnCompletion` - Hide output panel when which-key closes (default: true)
 
 5. **Repeat Last Command (`<leader><leader>`)**
    - Press `<leader><leader>` to repeat the last executed repeatable command
@@ -48,7 +49,7 @@ A fully functional which-key feature, inspired by [which-key.nvim](https://githu
 ### 1. `src/whichKey/whichKeyService.ts`
 
 **Purpose:** Core service class that manages the which-key display in Output Channel
-**Size:** ~310 lines
+**Size:** ~396 lines
 **Key Methods:**
 
 - `show(vimState, currentKeys)` - Sets timeout to show popup after configured delay
@@ -81,6 +82,7 @@ A fully functional which-key feature, inspired by [which-key.nvim](https://githu
   - `delay: number`
   - `groups: { [prefix: string]: string }`
   - `repeatWithLeaderLeader: boolean`
+  - `hideOnCompletion: boolean`
 - Added `repeatable?: boolean` to `IKeyRemapping` interface
 - Added `description?: string` to `IKeyRemapping` interface (user-defined friendly name for which-key display)
 - Added `whichkey: IWhichKeyConfiguration` to `IConfiguration` interface
@@ -97,6 +99,7 @@ A fully functional which-key feature, inspired by [which-key.nvim](https://githu
     delay: 200, // Show after 200ms pause
     groups: {}, // User can define custom group names
     repeatWithLeaderLeader: true, // Enable <leader><leader> repeat
+    hideOnCompletion: true, // Hide output panel when which-key closes
   };
   ```
 
@@ -106,9 +109,10 @@ A fully functional which-key feature, inspired by [which-key.nvim](https://githu
 
 - Added configuration schema in `contributes.configuration.properties`:
   - `vim.whichkey.enable` (boolean)
-  - `vim.whichkey.delay` (number, minimum 0)
+  - `vim.whichkey.delay` (number, minimum 0, default 500)
   - `vim.whichkey.groups` (object with string properties)
   - `vim.whichkey.repeatWithLeaderLeader` (boolean)
+  - `vim.whichkey.hideOnCompletion` (boolean)
 
 ### 5. `src/mode/modeHandler.ts`
 
@@ -536,7 +540,7 @@ These insights are crucial for anyone maintaining or extending this code!
 
 | File                                  | Lines | Purpose                                                  |
 | ------------------------------------- | ----- | -------------------------------------------------------- |
-| `src/whichKey/whichKeyService.ts`     | ~310  | Core service, Output Channel display, repeat tracking    |
+| `src/whichKey/whichKeyService.ts`     | ~396  | Core service, Output Channel display, repeat tracking    |
 | `src/configuration/iconfiguration.ts` | +20   | Type definitions (IWhichKeyConfiguration, IKeyRemapping) |
 | `src/configuration/configuration.ts`  | +10   | Default config values                                    |
 | `src/configuration/remapper.ts`       | +20   | `<leader><leader>` detection, hideWhichKey calls         |
@@ -564,7 +568,10 @@ These insights are crucial for anyone maintaining or extending this code!
   },
 
   // Enable <leader><leader> to repeat last command
-  "vim.whichkey.repeatWithLeaderLeader": true
+  "vim.whichkey.repeatWithLeaderLeader": true,
+
+  // Hide output panel when which-key closes (set false to keep terminal visible)
+  "vim.whichkey.hideOnCompletion": true
 }
 ```
 
