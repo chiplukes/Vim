@@ -65,6 +65,7 @@ export class Configuration implements IConfiguration {
     delay: 500,
     groups: {},
     repeatWithLeaderLeader: true,
+    hideOnCompletion: true,
   };
   autoSwitchInputMethod = {
     enable: false,

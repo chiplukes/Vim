@@ -117,6 +117,12 @@ export interface IWhichKeyConfiguration {
    * Enable <leader><leader> to repeat the last command marked with repeatable: true
    */
   repeatWithLeaderLeader: boolean;
+
+  /**
+   * Hide the output panel when the which-key popup closes.
+   * Set to false to keep the bottom panel visible after which-key closes.
+   */
+  hideOnCompletion: boolean;
 }
 
 export interface IConfiguration {

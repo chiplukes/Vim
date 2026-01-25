@@ -31,6 +31,12 @@ export class WhichKeyService implements vscode.Disposable {
   private outputChannel: vscode.OutputChannel;
 
   /**
+   * Tracks whether a terminal was active before showing which-key,
+   * so we can restore it after hiding.
+   */
+  private wasTerminalActive = false;
+
+  /**
    * Stores the last executed repeatable command for <leader><leader> functionality
    */
   private lastRepeatableCommand: IKeyRemapping | undefined;
@@ -113,8 +119,18 @@ export class WhichKeyService implements vscode.Disposable {
       if (this.isVisible) {
         // Clear the output channel but keep it open
         this.outputChannel.clear();
-        // Optionally hide it
-        void this.outputChannel.hide();
+        // Only hide if configured to do so (default: true)
+        // Setting hideOnCompletion to false keeps the bottom panel visible
+        if (configuration.whichkey?.hideOnCompletion !== false) {
+          void this.outputChannel.hide();
+        }
+
+        // Restore the previous panel view if a terminal was active
+        if (this.wasTerminalActive && vscode.window.activeTerminal) {
+          // Show the terminal that was active before which-key appeared
+          vscode.window.activeTerminal.show(true); // true = preserveFocus
+        }
+        this.wasTerminalActive = false;
 
         // Give the UI a moment to process the hide operation
         await new Promise((resolve) => setTimeout(resolve, 10));
@@ -189,6 +205,10 @@ export class WhichKeyService implements vscode.Disposable {
       // Only show the channel if it's not already visible - this is less intrusive
       // Users can manually open it from the bottom panel if they want to see it
       if (!this.isVisible) {
+        // Remember if a terminal was visible before we show the output channel
+        // so we can restore it when hiding
+        this.wasTerminalActive = vscode.window.activeTerminal !== undefined;
+
         this.outputChannel.show(true); // true = preserveFocus, so cursor stays in editor
       }
 

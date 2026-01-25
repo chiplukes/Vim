@@ -30,6 +30,7 @@ import { Logger } from '../util/logger';
 import { SpecialKeys } from '../util/specialKeys';
 import { scrollView } from '../util/util';
 import { VSCodeContext } from '../util/vscodeContext';
+import { WhichKeyService } from '../whichKey/whichKeyService';
 import { BaseAction, BaseCommand, KeypressState, getRelevantAction } from './../actions/base';
 import { ActionOverrideCmdD, CommandNumber, CommandRegister } from './../actions/commands/actions';
 import {
@@ -58,8 +59,6 @@ import {
   isStatusBarMode,
   isVisualMode,
 } from './mode';
-import { DocumentContentChangeAction } from '../actions/commands/documentChange';
-import { WhichKeyService } from '../whichKey/whichKeyService';
 
 interface IModeHandlerMap {
   get(editorId: Uri): ModeHandler | undefined;

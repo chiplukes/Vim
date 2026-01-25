@@ -739,6 +739,11 @@
           "markdownDescription": "Enable `<leader><leader>` to repeat the last command marked with `repeatable: true` in keybindings.",
           "default": true
         },
+        "vim.whichkey.hideOnCompletion": {
+          "type": "boolean",
+          "markdownDescription": "Hide the output panel when the which-key popup closes. Set to `false` to keep the bottom panel visible after which-key closes (useful if you have a terminal open).",
+          "default": true
+        },
         "vim.sneak": {
           "type": "boolean",
           "markdownDescription": "Enable the [Sneak](https://github.com/justinmk/vim-sneak) plugin for Vim.",
